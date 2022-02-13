@@ -6,19 +6,19 @@
 
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter.ttk import Treeview
 from PIL import Image, ImageTk
-import os.path, shutil
-import time, calendar
+import os.path, shutil, uuid
+from time import time
 
 from io_utils import *
 
 
 
-class MerlinTree(ttk.Treeview):
+class MerlinTree(Treeview):
 
     def __init__(self, parent, root=None):
-        ttk.Treeview.__init__(self, parent, selectmode='browse', show='tree')
+        Treeview.__init__(self, parent, selectmode='browse', show='tree')
         if root is None:
             self.rootGUI = parent
         else:
@@ -91,6 +91,18 @@ class MerlinMainTree(MerlinTree):
            "fav_order", "type", "limit_time", "add_time", 
            "uuid", "title")
 
+    rootItem = {'id': 1, 'parent_id': 0, 'order': 0, 'nb_children': 0, 
+                'fav_order': 0, 'type': 1, 'limit_time': 0, 'add_time': 0, 
+                'uuid': '', 'title': 'Root', 'imagepath': '', 'soundpath': ''}
+    favItem = {'id': 2, 'parent_id': 1, 'order': 0, 'nb_children': 0,
+               'fav_order': 0, 'type': 10, 'limit_time': 0, 'add_time': 0, 
+               'uuid': 'cd6949db-7c5f-486a-aa2b-48a80a7950d5', 'title': 'Merlin_favorite', 
+               'imagepath': '../res/defaultPics.zip', 'soundpath': ''}
+    recentItem = {'id': 3, 'parent_id': 1, 'order': 1, 'nb_children': 0, 
+                  'fav_order': 0, 'type': 18, 'limit_time': 0, 'add_time': 0, 
+                  'uuid': '8794f486-c461-4ace-a44b-85c359f84017', 'title': 'Merlin_discover', 
+                  'imagepath': '../res/defaultPics.zip', 'soundpath': ''}
+    defaultItems = [rootItem, favItem, recentItem]
     
     def __init__(self, parent, root=None):
         MerlinTree.__init__(self, parent, root)
@@ -122,9 +134,10 @@ class MerlinMainTree(MerlinTree):
         self.tag_configure("directory", foreground="grey")
         
 
+    
         
     
-    def populate(self, items, thumbnails, directory):
+    def populate(self, items, thumbnails):
         # clear existing data
         for c in self.get_children():
             self.delete(c)
@@ -136,10 +149,8 @@ class MerlinMainTree(MerlinTree):
         # adding data
         for item in items:
             favorite = '♥' if item['fav_order'] else ''
-            imagepath = os.path.join(directory, item['uuid'] + '.jpg')
-            soundpath = os.path.join(directory, item['uuid'] + '.mp3') if item['type'] in [4, 36] else ''
-            data = tuple([ favorite, imagepath,  soundpath] + \
-                [item[key] for key in MerlinMainTree.COL[3:]])
+            data = tuple([ favorite] + \
+                [item[key] for key in MerlinMainTree.COL[1:]])
             iid = item['id']
             if item['parent_id']==1:
                 parent = ''
@@ -173,7 +184,7 @@ class MerlinMainTree(MerlinTree):
         
     def make_item_list(self):
         
-        root_item = self.rootGUI.items[0]
+        root_item = MerlinMainTree.rootItem
         children = self.get_children('')
         root_item['nb_children'] = len(children)
         items = [root_item]
@@ -247,12 +258,17 @@ class MerlinMainTree(MerlinTree):
             answer = tk.messagebox.askyesno("Confirmation",question)
             if answer:
                 self.delete(node)
+                fav_tree = self.rootGUI.fav_tree
+                if fav_tree.exists(node):
+                    fav_tree.delete(node)
 
     def add_menu(self):
         current_node = self.selection()
         iid = self.insert(self.parent(current_node), self.index(current_node)+1, text=' \u25AE Nouveau Menu', tags="directory")
         self.set(iid, 'type', '2')
-        self.set(iid, 'add_time', str(calendar.timegm(time.gmtime())))
+        self.set(iid, 'add_time', str(int(time())))
+        self.set(iid, 'title', 'Nouveau Menu')
+        self.set(iid, 'uuid', str(uuid.uuid4()))
         self.focus(iid)
         self.selection_set(iid)
         self.update()
@@ -283,7 +299,7 @@ class MerlinMainTree(MerlinTree):
             iid = self.insert(self.parent(current_node), self.index(current_node)+1, text=' \u266A ' + uuid, tags='sound')
             self.set(iid, 'type', '4')
             self.set(iid, 'soundpath', filepath)
-            self.set(iid, 'add_time', str(calendar.timegm(time.gmtime())))
+            self.set(iid, 'add_time', str(int(time())))
             self.set(current_node, 'uuid', uuid)
         if len(filepaths)==1:
             self.focus(iid)
@@ -395,13 +411,12 @@ class MerlinFavTree(MerlinTree):
         MerlinTree.__init__(self, parent, root)
         
     
-    def populate(self):
+    def populate(self, main_tree):
         # clear existing data
         for c in self.get_children():
             self.delete(c)
         
         # add data
-        main_tree = self.rootGUI.main_tree
         fav_list = sorted([(int(main_tree.set(node,'fav_order')), node) for node in main_tree.tag_has('favorite')], reverse=True)
         for order, fav in enumerate(fav_list):
             node = fav[1]

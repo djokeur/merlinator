@@ -6,13 +6,13 @@
 
 
 import tkinter as tk
-from tkinter import ttk
-from PIL import Image, ImageTk
-import os.path
+from tkinter import ttk, filedialog
+from PIL import Image
+from PIL.ImageTk import PhotoImage
+import os.path, zipfile
 
 from io_utils import *
 from treeviews import *
-
 
 
 class MerlinGUI(tk.Tk):
@@ -23,11 +23,13 @@ class MerlinGUI(tk.Tk):
         self.title('Merlinator')
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
-        self.playlistpath = ''
+        self.sessionpath = ''
+        self.sessionfile = None
         self.thumbnails = {}
         self.moveitem = tk.StringVar()
         self.src_widget = None
         self.save_cursor = self['cursor'] or ''
+
         
         # configure the grid layout
         self.rowconfigure(0, weight=1)
@@ -46,8 +48,14 @@ class MerlinGUI(tk.Tk):
         self.config(menu=top_menu)
         file_menu = tk.Menu(top_menu, tearoff=False)
         top_menu.add_cascade(label='File', menu=file_menu)
-        file_menu.add_command(label="Ouvrir playlist", command=self.open_playlist)
-        file_menu.add_command(label="Sauver playlist", command=self.save_playlist)
+        file_menu.add_command(label="Nouvelle session", command=self.new_session)
+        file_menu.add_command(label="Ouvrir session", command=self.load_session)
+        file_menu.add_command(label="Sauver session", command=self.save_session)
+        file_menu.add_command(label="Sauver session sous", command=self.saveas_session)
+        file_menu.add_command(label="Importer playlist", command=self.import_playlist)
+        file_menu.add_command(label="Exporter playlist", command=self.export_playlist)
+        file_menu.add_command(label="Importer archive", command=self.import_playlist_from_zip)
+        file_menu.add_command(label="Exporter archive", command=self.export_all_to_zip)
         file_menu.add_command(label="Quitter", command=self.quit)
 
         self.grid_columnconfigure(0, weight=1)
@@ -68,7 +76,6 @@ class MerlinGUI(tk.Tk):
         self.update()
         
         self.make_main_tree(self.main_tree_area)
-        
         
         # Control Frame
         self.control_frame = tk.Frame(self.main_paned_window, width=260)
@@ -151,35 +158,168 @@ class MerlinGUI(tk.Tk):
 
     def on_closing(self):
         if True or tk.messagebox.askokcancel("Quit", "Do you want to quit?"):
+            if self.sessionfile and not self.sessionfile.closed:
+                self.sessionfile.close()
             self.quit()
             self.destroy()
 
-    def open_playlist(self):
-        
-        self.items, self.playlistpath = read_merlin_playlist()
-        self.fav_items = sorted([item for item in self.items if item['fav_order']], key=lambda x: x['fav_order']) 
-        
-        directory = os.path.dirname(self.playlistpath)
-        for item in self.items:
-            picpath = os.path.join(directory, item['uuid'] + '.jpg')
-            if os.path.exists(picpath):
-                with Image.open(picpath) as image:
-                    image = Image.open(picpath)
+
+    def populate_trees(self, items):
+        self.main_tree.populate(items, self.thumbnails)
+        self.fav_tree.populate(self.main_tree)
+
+
+    def load_thumbnails(self, items):
+        self.thumbnails = {}
+        for item in items:
+            imagepath = item['imagepath']
+            if os.path.exists(imagepath):
+                with Image.open(imagepath) as image:
                     image_small = image.resize((40, 40), Image.ANTIALIAS)
-                    self.thumbnails[item['uuid']] = ImageTk.PhotoImage(image_small)
+                    self.thumbnails[item['uuid']] = PhotoImage(image_small)
             else:
                 self.thumbnails[item['uuid']] = ''
-        self.main_tree.populate(self.items, self.thumbnails, directory)
-        self.fav_tree.populate()
-        
+                
     
-    def save_playlist(self):
+    def load_thumbnails_from_zip(self, items, zfile):
+        self.thumbnails = {}
+        for item in items:
+            if item['uuid'] in self.thumbnails:
+                continue
+            filename = item['uuid'] + '.jpg'
+            zippath = zipfile.Path(zfile, at=filename)
+            if zippath.exists():
+                with zfile.open(filename, 'r', pwd=info) as imagefile:
+                    with Image.open(imagefile) as image:
+                        image_small = image.resize((40, 40), Image.ANTIALIAS)
+                        self.thumbnails[item['uuid']] = PhotoImage(image_small)
+            else:
+                self.thumbnails[item['uuid']] = ''    
+                
+    
+
+    def import_playlist(self):
+        self.playlistpath = filedialog.askopenfilename(initialfile="playlist.bin", filetypes=[('binary', '*.bin')])
+        dirname = os.path.dirname(self.playlistpath)
+        try: 
+            with open(self.playlistpath, "rb") as file:
+                items = read_merlin_playlist(file)
+                for item in items:
+                    if item['type'] == 1: # root
+                        item['imagepath'] = ''
+                    else:
+                        item['imagepath'] = os.path.join(dirname, item['uuid'] + '.jpg')
+                    if item['type'] in [4, 36]:
+                        soundpath = os.path.join(dirname, item['uuid'] + '.mp3')
+                        item['soundpath'] = soundpath
+                    else:
+                        item['soundpath'] = ''
+            self.load_thumbnails(items)
+            self.populate_trees(items)
+        except IOError:
+            tk.messagebox.showwarning("Erreur", "Fichier non accessible")
+            
+            
+    def import_playlist_from_zip(self):
+        filepath = filedialog.askopenfilename(initialfile="merlin.zip", filetypes=[('fichier zip', '*.zip')])
+        if not filepath:
+            return
+        try:
+            with zipfile.ZipFile(filepath, 'r') as z:
+                with z.open("playlist.bin", "r") as file:
+                    items = read_merlin_playlist(file)
+                for item in items:
+                    item['imagepath'] = filepath
+                    if item['type'] in [4, 36]:
+                        item['soundpath'] = filepath
+                    else:
+                        item['soundpath'] = ''
+                self.load_thumbnails_from_zip(items, z)
+                self.populate_trees(items)
+        except IOError:
+            tk.messagebox.showwarning("Erreur", "Fichier non accessible")
+
+
+    def export_playlist(self):
         t = self.main_tree
-        if t.get_children(''):
-            self.items = t.make_item_list()
-            write_merlin_playlist(self.items)
+        if not t.get_children(''):
+            return
+        filepath = filedialog.asksaveasfilename(initialfile="playlist.bin", filetypes=[('binaire', '*.bin')])
+        try:
+            with open(filepath, "wb") as file:
+                items = t.make_item_list()
+                write_merlin_playlist(file, items)
+        except IOError:
+            tk.messagebox.showwarning("Erreur", "Fichier non accessible")     
+   
+
+    def export_all_to_zip(self):
+        t = self.main_tree
+        if not t.get_children(''):
+            return
+        filepath = filedialog.asksaveasfilename(initialfile="merlin.zip", filetypes=[('archive zip', '*.zip')])
+        try:
+            with zipfile.ZipFile(filepath, 'w') as zfile:
+                items = self.main_tree.make_item_list()
+                files_not_found = export_merlin_to_zip(items, zfile)
+            if files_not_found:
+                message = "Les fichiers suivants n'ont pas été trouvés:\n" + "\n".join([f"- '{f}'" for f in files_not_found])
+                tk.messagebox.showwarning("Fichiers non trouvés", message)
+        except IOError:
+            tk.messagebox.showwarning("Erreur", "Fichier non accessible")
         
+    def new_session(self):
+        items = MerlinMainTree.defaultItems
+        with zipfile.ZipFile('../res/defaultPics.zip', 'r') as zfile:
+            self.load_thumbnails_from_zip(items, zfile)
+        self.populate_trees(items)
         
+    def save_session(self):
+        if not self.sessionfile:
+            self.saveas_session()
+            return
+        elif not self.main_tree.get_children(''):
+            return
+        if not self.sessionfile.closed:
+            self.sessionfile.close()
+        self.sessionfile = open(self.sessionpath, 'wb')
+        items = self.main_tree.make_item_list()
+        self.sessionfile.write(json.dumps(items, indent=2).encode("utf-8"))
+        self.sessionfile.close()
+    
+    def saveas_session(self):
+        if not self.main_tree.get_children(''):
+            return
+        filepath = filedialog.asksaveasfilename(initialfile="merlinator.json", filetypes=[('fichier json', '*.json')])
+        if not filepath:
+            return
+        try:
+            new_sessionfile = open(filepath, 'w')
+            if self.sessionfile and not self.sessionfile.closed:
+                self.sessionfile.close()
+            self.sessionpath = filepath
+            self.sessionfile = new_sessionfile
+            self.save_session()
+        except IOError:
+            tk.messagebox.showwarning("Erreur", "Fichier non accessible") 
+
+            
+    def load_session(self):
+        filepath = filedialog.askopenfilename(initialfile="merlinator.json", filetypes=[('fichier json', '*.json')])
+        if not filepath:
+            return
+        try:
+            file = open(filepath, 'r')
+            self.sessionpath = filepath
+            self.sessionfile = file
+            items = json.loads(self.sessionfile.read())
+            file.close()
+            self.load_thumbnails(items)
+            self.populate_trees(items)
+        except IOError:
+            tk.messagebox.showwarning("Erreur", "Fichier non accessible")        
+        
+
         
     def make_main_tree(self, parent):
         self.main_tree = MerlinMainTree(parent, self)
