@@ -23,10 +23,11 @@ class MerlinTree(Treeview):
             self.rootGUI = parent
         else:
             self.rootGUI = root
-
+        
+        
+        self.bind('<Button-1>', self.rootGUI.mouseclick)
         self.bind('<B1-Motion>', self.rootGUI.movemouse)
         self.bind("<ButtonRelease-1>", self.rootGUI.mouserelease)
-        
         self.bind("<Control-Up>", self.moveUp)
         self.bind("<Control-Down>", self.moveDown)
         self.bind("<Control-Left>", self.moveParentDir)
@@ -62,18 +63,24 @@ class MerlinTree(Treeview):
         if node:
             self.move(node, self.parent(node), self.index(node)-1)
             self.see(node)
+            self.rootGUI.sync_buttons_main()
+            self.rootGUI.sync_buttons_fav()
             
     def moveDown(self, *args):
         node = self.selection()
         if node:
             self.move(node, self.parent(node), self.index(node)+1)
             self.see(node)
+            self.rootGUI.sync_buttons_main()
+            self.rootGUI.sync_buttons_fav()
             
     def moveParentDir(self, *args):
         node = self.selection()
         if node and self.parent(node) != '':
             self.move(node, self.parent(self.parent(node)), 'end')
             self.see(node)
+            self.rootGUI.sync_buttons_main()
+            self.rootGUI.sync_buttons_fav()
 
     def get_ancestors(self, node):
         res = [node]
@@ -242,9 +249,10 @@ class MerlinMainTree(MerlinTree):
         self.selection_set(self.current_selection)
         self.focus(self.current_selection)
 
-    def deleteNode(self, *args):
+    def deleteNode(self, event=None):
         node = self.selection()
-        if self.rootGUI.focus_get() in [self.rootGUI, self]:
+        if (event and event.widget in [self.rootGUI, self]) or \
+            event is None:
             if not node:
                 return
             if self.tag_has('directory', node):
@@ -261,6 +269,9 @@ class MerlinMainTree(MerlinTree):
                 fav_tree = self.rootGUI.fav_tree
                 if fav_tree.exists(node):
                     fav_tree.delete(node)
+            self.rootGUI.sync_buttons_main()
+            self.rootGUI.sync_buttons_fav()
+
 
     def add_menu(self):
         current_node = self.selection()
@@ -385,13 +396,14 @@ class MerlinMainTree(MerlinTree):
         if node and self.tag_has('sound', node) and not self.tag_has('favorite', node):
             self.item(node, tags=('sound', 'favorite'))
             self.set(node, 'Favori', '♥')
-            self.rootGUI.fav_tree.insert('', 'end', iid=node, \
+            self.rootGUI.fav_tree.insert('', index, iid=node, \
                                          text=self.item(node, 'text'), \
                                          image=self.item(node, 'image'))
             self.rootGUI.fav_tree.selection_set(node)
             self.rootGUI.fav_tree.see(node)
             self.update()
             self.rootGUI.fav_tree.update()
+            self.rootGUI.sync_buttons_fav()
         
     def removeFromFavorite(self, node):
         node = self.selection()
@@ -401,6 +413,7 @@ class MerlinMainTree(MerlinTree):
             self.rootGUI.fav_tree.delete(node)
             self.update()
             self.rootGUI.fav_tree.update()
+            self.rootGUI.sync_buttons_fav()
             
 
     

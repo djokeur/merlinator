@@ -48,14 +48,14 @@ class MerlinGUI(tk.Tk):
         self.config(menu=top_menu)
         file_menu = tk.Menu(top_menu, tearoff=False)
         top_menu.add_cascade(label='File', menu=file_menu)
-        file_menu.add_command(label="Nouvelle session", command=self.new_session)
-        file_menu.add_command(label="Ouvrir session", command=self.load_session)
-        file_menu.add_command(label="Sauver session", command=self.save_session)
+        file_menu.add_command(label="Nouvelle session (Ctrl-n)", command=self.new_session)
+        file_menu.add_command(label="Ouvrir session (Ctrl-o)", command=self.load_session)
+        file_menu.add_command(label="Sauver session  (Ctrl-s)", command=self.save_session)
         file_menu.add_command(label="Sauver session sous", command=self.saveas_session)
-        file_menu.add_command(label="Importer playlist", command=self.import_playlist)
-        file_menu.add_command(label="Exporter playlist", command=self.export_playlist)
-        file_menu.add_command(label="Importer archive", command=self.import_playlist_from_zip)
-        file_menu.add_command(label="Exporter archive", command=self.export_all_to_zip)
+        file_menu.add_command(label="Importer playlist (Ctrl-i)", command=self.import_playlist)
+        file_menu.add_command(label="Exporter playlist (Ctrl-e)", command=self.export_playlist)
+        file_menu.add_command(label="Importer archive (Ctrl-m)", command=self.import_playlist_from_zip)
+        file_menu.add_command(label="Exporter archive (Ctrl-x)", command=self.export_all_to_zip)
         file_menu.add_command(label="Quitter", command=self.quit)
 
         self.grid_columnconfigure(0, weight=1)
@@ -89,27 +89,23 @@ class MerlinGUI(tk.Tk):
         self.title_label_frame = tk.LabelFrame(self.control_frame, text="Titre du son/menu", height=2, padx=5)
         self.title_label_frame.grid(row=0, column=0, columnspan=2, sticky='ew')
         self.title_label_frame.grid_columnconfigure(0, weight=1)
-        self.title_entry = tk.Entry(self.title_label_frame)
+        self.title_entry = tk.Entry(self.title_label_frame, state='disabled')
         self.title_entry.grid(row=0, column=0, sticky='ew')
         self.title_entry.bind('<Return>', self.setTitle)
-        self.buttonSetTitle = tk.Button(self.title_label_frame, text="Mettre à jour le titre",fg="black", command=self.setTitle)
+        self.buttonSetTitle = tk.Button(self.title_label_frame, text="Mettre à jour le titre",fg="black", command=self.setTitle, state='disabled')
         self.buttonSetTitle.grid(row=1, column=0)
+        self.title_entry.bind('<KeyRelease>', self.sync_title_button)
         
         
         # Edition Area
         self.edition_area = tk.LabelFrame(self.control_frame, text='Édition')
         self.edition_area.grid(row=1, column=1, sticky='en')
         
-        self.buttonDelete = tk.Button(self.edition_area, text="Supprimer", command=self.main_tree.deleteNode)
-        self.buttonSelectImage = tk.Button(self.edition_area, text="Changer image", command=self.main_tree.select_image)
-        self.buttonAddMenu = tk.Button(self.edition_area, text="Nouveau Menu", command=self.main_tree.add_menu)
-        self.buttonAddSound = tk.Button(self.edition_area, text="Nouveau Son", command=self.main_tree.add_sound)
+        self.buttonDelete = tk.Button(self.edition_area, text="Supprimer", state='disabled', command=self.main_tree.deleteNode)
+        self.buttonSelectImage = tk.Button(self.edition_area, text="Changer image", state='disabled', command=self.main_tree.select_image)
+        self.buttonAddMenu = tk.Button(self.edition_area, text="Nouveau Menu", state='disabled', command=self.main_tree.add_menu)
+        self.buttonAddSound = tk.Button(self.edition_area, text="Nouveau Son", state='disabled', command=self.main_tree.add_sound)
                 
-        # self.edition_area.grid_rowconfigure(0, weight=1)
-        # self.edition_area.grid_rowconfigure(1, weight=1)
-        # self.edition_area.grid_rowconfigure(2, weight=1)
-        # self.edition_area.grid_rowconfigure(3, weight=1)
-        
         self.buttonSelectImage.grid(row=0, column=0, sticky='ew')
         self.buttonDelete.grid(row=1, column=0, sticky='ew')
         self.buttonAddMenu.grid(row=2, column=0, sticky='ew')
@@ -120,12 +116,12 @@ class MerlinGUI(tk.Tk):
         self.main_tree_button_area = tk.LabelFrame(self.control_frame, text='Déplacer\nélément', width=60)
         self.main_tree_button_area.grid(row=1, column=0, sticky='nw')
         
-        buttonMoveUp = tk.Button(self.main_tree_button_area, text="\u21D1",fg="black", width=5, command=self.main_tree.moveUp)
-        buttonMoveUp.grid(row=0, column=0)
-        buttonMoveParentDir = tk.Button(self.main_tree_button_area, text="\u21D0",fg="black", width=5, command=self.main_tree.moveParentDir)
-        buttonMoveParentDir.grid(row=1, column=0)
-        buttonMoveDown = tk.Button(self.main_tree_button_area, text="\u21D3",fg="black", width=5, command=self.main_tree.moveDown)
-        buttonMoveDown.grid(row=2, column=0)
+        self.buttonMoveUp = tk.Button(self.main_tree_button_area, text="\u21D1",fg="black", width=5, state='disabled', command=self.main_tree.moveUp)
+        self.buttonMoveUp.grid(row=0, column=0)
+        self.buttonMoveParentDir = tk.Button(self.main_tree_button_area, text="\u21D0",fg="black", width=5, state='disabled', command=self.main_tree.moveParentDir)
+        self.buttonMoveParentDir.grid(row=1, column=0)
+        self.buttonMoveDown = tk.Button(self.main_tree_button_area, text="\u21D3",fg="black", width=5, state='disabled', command=self.main_tree.moveDown)
+        self.buttonMoveDown.grid(row=2, column=0)
          
          
         
@@ -139,15 +135,15 @@ class MerlinGUI(tk.Tk):
         
         
         #Favorite Button
-        self.buttonToggleFavorite = tk.Button(self.control_frame, text="Ajouter/retirer\ndes favoris", command=self.main_tree.toggleFavorite)
+        self.buttonToggleFavorite = tk.Button(self.control_frame, text="Ajouter/retirer\ndes favoris", state='disabled', command=self.main_tree.toggleFavorite)
         self.buttonToggleFavorite.grid(row=2, column=0, sticky='sw')
         
         self.fav_tree_button_area = tk.LabelFrame(self.control_frame, text='Déplacer favori')
         self.fav_tree_button_area.grid(row=2, column=1, sticky='sw')
-        buttonMoveUpFav = tk.Button(self.fav_tree_button_area, text="\u21D1",fg="black", width=5, command=self.fav_tree.moveUp)
-        buttonMoveUpFav.grid(row=0, column=0)
-        buttonMoveDownFav = tk.Button(self.fav_tree_button_area, text="\u21D3",fg="black", width=5, command=self.fav_tree.moveDown)
-        buttonMoveDownFav.grid(row=0, column=1)
+        self.buttonMoveUpFav = tk.Button(self.fav_tree_button_area, text="\u21D1",fg="black", width=5, state='disabled', command=self.fav_tree.moveUp)
+        self.buttonMoveUpFav.grid(row=0, column=0)
+        self.buttonMoveDownFav = tk.Button(self.fav_tree_button_area, text="\u21D3",fg="black", width=5, state='disabled', command=self.fav_tree.moveDown)
+        self.buttonMoveDownFav.grid(row=0, column=1)
         
         self.update()
         
@@ -155,6 +151,13 @@ class MerlinGUI(tk.Tk):
         self.bind("<BackSpace>", self.main_tree.deleteNode)
         self.bind("<Delete>", self.main_tree.deleteNode)
         
+        self.bind("<Control-o>", lambda event:self.load_session())
+        self.bind("<Control-s>", lambda event:self.save_session())
+        self.bind("<Control-n>", lambda event:self.new_session())
+        self.bind("<Control-i>", lambda event:self.import_playlist())
+        self.bind("<Control-e>", lambda event:self.export_playlist())
+        self.bind("<Control-m>", lambda event:self.import_playlist_from_zip())
+        self.bind("<Control-x>", lambda event:self.export_all_to_zip())
 
     def on_closing(self):
         if True or tk.messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -216,6 +219,8 @@ class MerlinGUI(tk.Tk):
                         item['soundpath'] = ''
             self.load_thumbnails(items)
             self.populate_trees(items)
+            self.buttonAddMenu['state'] = 'normal'
+            self.buttonAddSound['state'] = 'normal'
         except IOError:
             tk.messagebox.showwarning("Erreur", "Fichier non accessible")
             
@@ -236,6 +241,8 @@ class MerlinGUI(tk.Tk):
                         item['soundpath'] = ''
                 self.load_thumbnails_from_zip(items, z)
                 self.populate_trees(items)
+                self.buttonAddMenu['state'] = 'normal'
+                self.buttonAddSound['state'] = 'normal'
         except IOError:
             tk.messagebox.showwarning("Erreur", "Fichier non accessible")
 
@@ -273,6 +280,8 @@ class MerlinGUI(tk.Tk):
         with zipfile.ZipFile('../res/defaultPics.zip', 'r') as zfile:
             self.load_thumbnails_from_zip(items, zfile)
         self.populate_trees(items)
+        self.buttonAddMenu['state'] = 'normal'
+        self.buttonAddSound['state'] = 'normal'
         
     def save_session(self):
         if not self.sessionfile:
@@ -316,6 +325,8 @@ class MerlinGUI(tk.Tk):
             file.close()
             self.load_thumbnails(items)
             self.populate_trees(items)
+            self.buttonAddMenu['state'] = 'normal'
+            self.buttonAddSound['state'] = 'normal'
         except IOError:
             tk.messagebox.showwarning("Erreur", "Fichier non accessible")        
         
@@ -366,30 +377,80 @@ class MerlinGUI(tk.Tk):
             else:
                 if self.fav_tree.selection():
                     self.fav_tree.selection_set([])
-    
+            self.title_entry.delete(0, 'end')
+            self.title_entry.insert(0, self.main_tree.item(self.main_tree.selection(),'text')[3:])
+            self.sync_buttons_main()
+            
         elif w == self.fav_tree:
             selected_node = w.selection()
             if selected_node and self.main_tree.selection() != selected_node:
-                self.main_tree.selection_set(selected_node)
-                self.main_tree.see(selected_node)
+                    self.main_tree.selection_set(selected_node)
+                    self.main_tree.see(selected_node)
+            self.sync_buttons_fav()
         else:
             return
-        self.title_entry.delete(0, 'end')
-        self.title_entry.insert(0, self.main_tree.item(self.main_tree.selection(),'text')[3:])
-
-    def clear_temp_variables(self, event):
+        
+    def sync_buttons_main(self, event=None):
+        selected_node = self.main_tree.selection()
+        if selected_node:
+            self.title_entry['state'] = "normal"
+            self.buttonSelectImage['state'] = 'normal'
+            self.buttonDelete['state'] = 'normal'
+            self.buttonToggleFavorite['state'] = 'normal'
+            index = self.main_tree.index(selected_node)
+            parent = self.main_tree.parent(selected_node)
+            if index>0:
+                self.buttonMoveUp['state'] = 'normal'
+            else:
+                self.buttonMoveUp['state'] = 'disabled'
+            if index == len(self.main_tree.get_children(parent))-1:
+                self.buttonMoveDown['state'] = 'disabled'
+            else:
+                self.buttonMoveDown['state'] = 'normal'
+            if parent == '':
+                self.buttonMoveParentDir['state'] = 'disabled'
+            else:
+                self.buttonMoveParentDir['state'] = 'normal'
+        else:
+            self.title_entry['state'] = "disabled"
+            self.buttonSelectImage['state'] = 'disabled'
+            self.buttonDelete['state'] = 'disabled'
+            self.buttonToggleFavorite['state'] = 'disabled'
+            self.buttonMoveDown['state'] = 'disabled'
+            self.buttonMoveUp['state'] = 'disabled'
+            self.buttonMoveParentDir['state'] = 'disabled'
+            
+    
+    def sync_buttons_fav(self, event=None):
+        selected_node = self.fav_tree.selection()
+        if selected_node:
+            index = self.fav_tree.index(selected_node)
+            if index>0:
+                self.buttonMoveUpFav['state'] = 'normal'
+            else:
+                self.buttonMoveUpFav['state'] = 'disabled'
+            if index == len(self.fav_tree.get_children(self.fav_tree.parent(selected_node)))-1:
+                self.buttonMoveDownFav['state'] = 'disabled'
+            else:
+                self.buttonMoveDownFav['state'] = 'normal'
+        else:
+            self.buttonMoveDownFav['state'] = 'disabled'
+            self.buttonMoveUpFav['state'] = 'disabled'
+        
+        
+    def clear_temp_variables(self, event=None):
         self.moveitem.set('')
         self.src_widget = None
 
-    def movemouse(self,event):
+    def mouseclick(self, event):
         t = event.widget
-        n = t.selection()
+        if t.identify_region(event.x, event.y) == "tree":
+            self.moveitem.set(t.identify_row(event.y))
+
+    def movemouse(self, event):
+        t = event.widget
         self.src_widget = t
-        self.moveitem.set(t.focus())
-        x = event.x
-        y = event.y
-        # mitem.geometry("%dx%d+%d+%d" % (20, 10, x, y+90))
-        # mitem.deiconify()
+        # self.moveitem.set(t.focus())
         self.save_cursor = t['cursor'] or ''
         if self.moveitem.get():
             t['cursor'] = "hand2"
@@ -398,6 +459,24 @@ class MerlinGUI(tk.Tk):
     def mouserelease(self, event):
         t = event.widget
         t['cursor'] = self.save_cursor
+        
+        x = event.x+t.winfo_rootx()
+        y = event.y+t.winfo_rooty()
+        x0 = self.main_tree.winfo_rootx()
+        x1 = x0 + self.main_tree.winfo_width()
+        y0 = self.main_tree.winfo_rooty()
+        y1 = y0 + self.main_tree.winfo_height()
+        if x0<=x<=x1 and y0<=y<=y1:
+            t = self.main_tree
+        else:
+            x0 = self.fav_tree.winfo_rootx()
+            x1 = x0 + self.fav_tree.winfo_width()
+            y0 = self.fav_tree.winfo_rooty()
+            y1 = y0 + self.fav_tree.winfo_height()
+            if x0<=x<=x1 and y0<=y<=y1:
+                t = self.fav_tree
+            else:
+                t = None
         moveitem = self.moveitem
         src = moveitem.get()
         new_pos = None
@@ -440,6 +519,7 @@ class MerlinGUI(tk.Tk):
                         t.see(iid)
                     else: # shouldn't happen
                         pass
+                    self.sync_buttons_main()
                 elif t == self.fav_tree:
                     if t.identify_region(event.x, event.y) == "tree":
                         new_pos = t.index(t.identify_row(event.y))
@@ -450,18 +530,21 @@ class MerlinGUI(tk.Tk):
                             new_pos = 'end'
                     if new_pos is not None:
                         self.fav_tree.move(src, '', new_pos)
+                    self.sync_buttons_main()
             elif self.src_widget == self.main_tree and t == self.fav_tree:
-                
-                if t.identify_region(event.x, event.y) == "tree":
-                    new_pos = t.index(t.identify_row(event.y))
-                elif t.identify_column(event.x) == '#0':
-                    if event.y<0 or (t.identify_region(event.x, event.y) in ["heading", "separator"]):
+                dest_x = event.x+event.widget.winfo_rootx()-t.winfo_rootx()
+                dest_y = event.y+event.widget.winfo_rooty()-t.winfo_rooty()
+                if t.identify_region(dest_x, dest_y) == "tree":
+                    new_pos = t.index(t.identify_row(dest_y))+1
+                elif t.identify_column(dest_x) == '#0':
+                    if event.y<0 or (t.identify_region(dest_x, dest_y) in ["heading", "separator"]):
                         new_pos = 0
                     else:
                         new_pos = 'end'
                 if new_pos is not None:
                     self.main_tree.addToFavorite(src, new_pos)
                 self.src_widget.update()
+                self.sync_buttons_fav()
         t.update()
         moveitem.set("")
         self.src_widget = None
@@ -478,4 +561,11 @@ class MerlinGUI(tk.Tk):
         if self.fav_tree.exists(node):
             self.fav_tree.item(node, text=title)
         
+    def sync_title_button(self, *args):
+        current_string = self.title_entry.get()
+        node = self.main_tree.selection()
+        if current_string == self.main_tree.item(node, 'text')[3:]:
+            self.buttonSetTitle['state'] = 'disabled'
+        else:
+            self.buttonSetTitle['state'] = 'normal'
 
