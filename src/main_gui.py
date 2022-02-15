@@ -50,7 +50,7 @@ class MerlinGUI(GUIActions):
         top_menu = tk.Menu(self)
         self.config(menu=top_menu)
         file_menu = tk.Menu(top_menu, tearoff=False)
-        top_menu.add_cascade(label='File', menu=file_menu)
+        top_menu.add_cascade(label='Fichier', menu=file_menu)
         file_menu.add_command(label="Nouvelle session (Ctrl-n)", command=self.new_session)
         file_menu.add_command(label="Ouvrir session (Ctrl-o)", command=self.load_session)
         file_menu.add_command(label="Sauver session  (Ctrl-s)", command=self.save_session)
