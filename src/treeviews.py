@@ -307,6 +307,33 @@ class MerlinMainTree(MerlinTree):
                     # filepath = new_filepath
                     # dirname, basename = os.path.split(filepath)        
             uuid, ext = os.path.splitext(basename)
+            # check length
+            b = uuid.encode('UTF-8')
+            new_filepath = filepath
+            while len(b)>64:
+                b = b[:65]
+                valid = False
+                while not valid:
+                    b = b[:-1]
+                    try:
+                        new_root = b.decode('UTF-8')
+                        valid = uuid.startswith(new_root)
+                    except UnicodeError:
+                        pass
+                new_basename = newroot + ext
+                answer = tk.messagebox.askokcancel("Nom de fichier trop long", f"Le nom de fichier '{basename}' est trop long.\nLe copier sous un nouveau nom ?")
+                if not answer:
+                    return
+                new_filepath = tk.filedialog.asksaveasfilename(initialdir=dirname, initialfile=new_basename, filetypes=[('mp3', '*.mp3')], multiple=False)
+                if not new_filepath:
+                    return
+                new_dirname, new_basename = os.path.split(new_filepath)
+                new_uuid, ext = os.path.splitext(new_basename)
+                b = new_uuid.encode('UTF-8')
+            if new_filepath != filepath:
+                uuid = new_uuid
+                filepath = new_filepath                
+                shutil.copyfile(filepath, new_filepath)
             iid = self.insert(self.parent(current_node), self.index(current_node)+1, text=' \u266A ' + uuid, tags='sound')
             self.set(iid, 'type', '4')
             self.set(iid, 'soundpath', filepath)
@@ -331,6 +358,36 @@ class MerlinMainTree(MerlinTree):
         if not filepath:
             return
         dirname, basename = os.path.split(filepath)
+        root, ext = os.path.splitext(basename)
+        # check length
+        if self.tag_has('directory', current_node):
+            b = root.encode('UTF-8')
+            new_filepath = filepath
+            while len(b)>64:
+                b = b[:65]
+                valid = False
+                while not valid:
+                    b = b[:-1]
+                    try:
+                        new_root = b.decode('UTF-8')
+                        valid = root.startswith(new_root)
+                    except UnicodeError:
+                        pass
+                new_basename = newroot + ext
+                answer = tk.messagebox.askokcancel("Nom de fichier trop long", f"Le nom de fichier '{basename}' est trop long.\nLe copier sous un nouveau nom ?")
+                if not answer:
+                    return
+                new_filepath = tk.filedialog.asksaveasfilename(initialdir=dirname, initialfile=new_basename, filetypes=[('jpg', '*.jpg')], multiple=False)
+                if not new_filepath:
+                    return
+                new_dirname, new_basename = os.path.split(new_filepath)
+                new_root, ext = os.path.splitext(new_basename)
+                b = new_uuid.encode('UTF-8')
+            if new_filepath != filepath:
+                uuid = new_uuid
+                filepath = new_filepath                
+                shutil.copyfile(filepath, new_filepath)
+            self.set(current_node, 'uuid', uuid)
         
         # if self.tag_has('directory', current_node):
             # if dirname != playlist_dirname:
