@@ -12,10 +12,13 @@ from PIL.ImageTk import PhotoImage
 import os.path, zipfile
 
 from io_utils import *
-from treeviews import *
+from treeviews import MerlinMainTree, MerlinFavTree
 from gui_actions import *
-
-            
+try:
+    from audio import AudioWidget
+    enable_audio = True
+except ImportError as error:
+    enable_audio = False
 
 
 class MerlinGUI(GUIActions):
@@ -163,6 +166,9 @@ class MerlinGUI(GUIActions):
         self.bind("<Control-m>", lambda event:self.import_playlist_from_zip())
         self.bind("<Control-x>", lambda event:self.export_all_to_zip())
 
+        if enable_audio:
+            self.audio_widget = AudioWidget(self)
+            self.bind("<space>", self.audio_widget.PlayStop)
 
         
     def make_main_tree(self, parent):

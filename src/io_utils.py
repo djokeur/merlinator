@@ -13,7 +13,6 @@ import os.path
 import json
 
 
-
 bytezero = b'\x00'
 info = b"ChouetteRadio"
 
