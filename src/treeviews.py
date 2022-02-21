@@ -37,6 +37,8 @@ class MerlinTree(Treeview):
         self.bind("<KeyRelease-Control_R>", self.enable_arrows)
         
         self.bind('<<TreeviewSelect>>', self.rootGUI.synchronise_selection)
+        
+        self.bind('<Double-Button-1>', self.play_sound)
 
     def disable_arrows(self, *args):
         temp = self.bind_class('Treeview', '<Up>')
@@ -90,6 +92,7 @@ class MerlinTree(Treeview):
             parent = self.parent(parent)
         return res
  
+                
 
 class MerlinMainTree(MerlinTree):
 
@@ -472,6 +475,13 @@ class MerlinMainTree(MerlinTree):
             self.rootGUI.fav_tree.update()
             self.rootGUI.sync_buttons_fav()
             
+            
+    def play_sound(self, event):
+        if self.rootGUI.enable_audio:
+            node = self.identify_row(event.y)
+            if self.tag_has('sound', node):
+                self.rootGUI.audio_widget.Play()
+ 
 
     
 
@@ -495,3 +505,8 @@ class MerlinFavTree(MerlinTree):
         self.update()
     
     
+    def play_sound(self, event):
+        if self.rootGUI.enable_audio:
+            node = self.identify_row(event.y)
+            self.rootGUI.audio_widget.Play()
+ 

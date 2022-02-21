@@ -12,7 +12,7 @@ class GUIActions(tk.Tk):
         if tk.messagebox.askokcancel("Quitter", "Voulez vous quitter merlinator?"):
             if self.sessionfile and not self.sessionfile.closed:
                 self.sessionfile.close()
-            if self.audio_widget.sound:
+            if self.enable_audio:
                 self.audio_widget.sound.close()
             self.quit()
             self.destroy()
@@ -61,6 +61,8 @@ class GUIActions(tk.Tk):
                 self.buttonMoveParentDir['state'] = 'disabled'
             else:
                 self.buttonMoveParentDir['state'] = 'normal'
+            if self.enable_audio:
+                self.audio_widget.init()
         else:
             self.title_entry['state'] = "disabled"
             self.buttonSelectImage['state'] = 'disabled'
@@ -69,6 +71,9 @@ class GUIActions(tk.Tk):
             self.buttonMoveDown['state'] = 'disabled'
             self.buttonMoveUp['state'] = 'disabled'
             self.buttonMoveParentDir['state'] = 'disabled'
+            if self.enable_audio:
+                self.audio_widget.init()
+            
             
     
     def sync_buttons_fav(self, event=None):

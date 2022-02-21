@@ -20,12 +20,10 @@ info = b"ChouetteRadio"
 def read_merlin_playlist(stream):
 
     items = []
-    byte = stream.read(1)
-    while byte:
+    while (b:=stream.read(2)):
         
         item = dict()
         # id
-        b = byte + stream.read(1)
         if not b: raise Exception("wrong file format")
         item['id'] = int.from_bytes(b, byteorder='little')
         
@@ -81,7 +79,6 @@ def read_merlin_playlist(stream):
         b = stream.read(66-length)
         
         items.append(item)
-        byte = stream.read(1)
     return items
 
 

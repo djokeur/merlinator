@@ -35,6 +35,7 @@ class MerlinGUI(GUIActions):
         self.moveitem = tk.StringVar()
         self.src_widget = None
         self.save_cursor = self['cursor'] or ''
+        self.enable_audio = enable_audio
 
         
         # configure the grid layout
@@ -46,7 +47,7 @@ class MerlinGUI(GUIActions):
         # rw = int(screen_w / 2)
         # rh = int(screen_h / 2)
         # self.geometry('{}x{}+{:g}+{:g}'.format(rw, rh, rw / 2, rh / 2))
-        self.geometry('{}x{}+{:g}+{:g}'.format(670, 500, 300, 200))
+        self.geometry('{}x{}+{:g}+{:g}'.format(700, 600, 300, 100))
         self.update()
         
         # Create menu
@@ -84,15 +85,15 @@ class MerlinGUI(GUIActions):
         self.make_main_tree(self.main_tree_area)
         
         # Control Frame
-        self.control_frame = tk.Frame(self.main_paned_window, width=260)
-        self.control_frame.grid_rowconfigure(3, weight=1)
+        self.control_frame = tk.Frame(self.main_paned_window, width=280)
+        self.control_frame.grid_rowconfigure(4, weight=1)
         self.control_frame.grid_columnconfigure(0, weight=1)
         self.control_frame.grid_columnconfigure(1, weight=1)
         self.control_frame.grid_propagate(0)
         self.main_paned_window.add(self.control_frame, sticky="nsew")
         
-        # Title 
-        self.title_label_frame = tk.LabelFrame(self.control_frame, text="Titre du son/menu", height=2, padx=5)
+        # Title / Sound 
+        self.title_label_frame = tk.LabelFrame(self.control_frame, text="Contenu", height=2, padx=5)
         self.title_label_frame.grid(row=0, column=0, columnspan=2, sticky='ew')
         self.title_label_frame.grid_columnconfigure(0, weight=1)
         vcmd = (self.register(lambda s: len(s.encode('UTF-8'))<=66), '%P')
@@ -102,26 +103,33 @@ class MerlinGUI(GUIActions):
         self.buttonSetTitle = tk.Button(self.title_label_frame, text="Mettre à jour le titre",fg="black", command=self.setTitle, state='disabled')
         self.buttonSetTitle.grid(row=1, column=0)
         self.title_entry.bind('<KeyRelease>', self.sync_title_button)
+
+        # Audio
+        if self.enable_audio:
+            self.audio_widget = AudioWidget(self.title_label_frame, self)
+            self.audio_widget.grid(row=2, column=0, sticky = 'ew')
+            self.bind("<space>", self.audio_widget.PlayPause)
+        
         
         
         # Edition Area
         self.edition_area = tk.LabelFrame(self.control_frame, text='Édition')
-        self.edition_area.grid(row=1, column=1, sticky='en')
+        self.edition_area.grid(row=2, column=1, sticky='en')
         
         self.buttonDelete = tk.Button(self.edition_area, text="Supprimer", state='disabled', command=self.main_tree.deleteNode)
         self.buttonSelectImage = tk.Button(self.edition_area, text="Changer image", state='disabled', command=self.main_tree.select_image)
         self.buttonAddMenu = tk.Button(self.edition_area, text="Nouveau Menu", state='disabled', command=self.main_tree.add_menu)
         self.buttonAddSound = tk.Button(self.edition_area, text="Nouveau Son", state='disabled', command=self.main_tree.add_sound)
                 
-        self.buttonSelectImage.grid(row=0, column=0, sticky='ew')
-        self.buttonDelete.grid(row=1, column=0, sticky='ew')
-        self.buttonAddMenu.grid(row=2, column=0, sticky='ew')
-        self.buttonAddSound.grid(row=3, column=0, sticky='ew')
+        self.buttonSelectImage.grid(row=0, column=1, sticky='ew')
+        self.buttonDelete.grid(row=1, column=1, sticky='ew')
+        self.buttonAddMenu.grid(row=0, column=0, sticky='ew')
+        self.buttonAddSound.grid(row=1, column=0, sticky='ew')
         
         
         # Displacement Buttons
         self.main_tree_button_area = tk.LabelFrame(self.control_frame, text='Déplacer\nélément', width=60)
-        self.main_tree_button_area.grid(row=1, column=0, sticky='nw')
+        self.main_tree_button_area.grid(row=2, column=0, sticky='nw')
         
         self.buttonMoveUp = tk.Button(self.main_tree_button_area, text="\u21D1",fg="black", width=5, state='disabled', command=self.main_tree.moveUp)
         self.buttonMoveUp.grid(row=0, column=0)
@@ -131,26 +139,25 @@ class MerlinGUI(GUIActions):
         self.buttonMoveDown.grid(row=2, column=0)
          
          
-        
         # Favorite tree area
         self.fav_tree_area = tk.LabelFrame(self.control_frame, text="Favoris", width=200)
         self.fav_tree_area.grid_rowconfigure(0, weight=1)
         self.fav_tree_area.grid_columnconfigure(0, weight=1)
-        self.fav_tree_area.grid(row=3, column=0, columnspan=2, sticky='nsew')
+        self.fav_tree_area.grid(row=4, column=0, columnspan=2, sticky='nsew')
         self.fav_tree_area.grid_propagate(0)
         self.make_fav_tree(self.fav_tree_area)
         
-        
         #Favorite Button
         self.buttonToggleFavorite = tk.Button(self.control_frame, text="Ajouter/retirer\ndes favoris", state='disabled', command=self.main_tree.toggleFavorite)
-        self.buttonToggleFavorite.grid(row=2, column=0, sticky='sw')
+        self.buttonToggleFavorite.grid(row=3, column=0, sticky='sw')
         
         self.fav_tree_button_area = tk.LabelFrame(self.control_frame, text='Déplacer favori')
-        self.fav_tree_button_area.grid(row=2, column=1, sticky='sw')
+        self.fav_tree_button_area.grid(row=3, column=1, sticky='s')
         self.buttonMoveUpFav = tk.Button(self.fav_tree_button_area, text="\u21D1",fg="black", width=5, state='disabled', command=self.fav_tree.moveUp)
         self.buttonMoveUpFav.grid(row=0, column=0)
         self.buttonMoveDownFav = tk.Button(self.fav_tree_button_area, text="\u21D3",fg="black", width=5, state='disabled', command=self.fav_tree.moveDown)
         self.buttonMoveDownFav.grid(row=0, column=1)
+        
         
         self.update()
         
@@ -166,9 +173,6 @@ class MerlinGUI(GUIActions):
         self.bind("<Control-m>", lambda event:self.import_playlist_from_zip())
         self.bind("<Control-x>", lambda event:self.export_all_to_zip())
 
-        if enable_audio:
-            self.audio_widget = AudioWidget(self)
-            self.bind("<space>", self.audio_widget.PlayStop)
 
         
     def make_main_tree(self, parent):
