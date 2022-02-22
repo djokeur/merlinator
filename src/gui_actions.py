@@ -12,7 +12,7 @@ class GUIActions(tk.Tk):
         if tk.messagebox.askokcancel("Quitter", "Voulez vous quitter merlinator?"):
             if self.sessionfile and not self.sessionfile.closed:
                 self.sessionfile.close()
-            if self.enable_audio:
+            if self.enable_audio and self.audio_widget.sound:
                 self.audio_widget.sound.close()
             self.quit()
             self.destroy()
