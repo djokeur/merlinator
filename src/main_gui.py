@@ -27,6 +27,8 @@ class MerlinGUI(GUIActions):
         # create root window
         tk.Tk.__init__(self)
         self.title('Merlinator')
+        # self.iconbitmap("../res/merlinator_64px.ico")
+        self.load_image()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         self.sessionpath = ''
@@ -36,6 +38,7 @@ class MerlinGUI(GUIActions):
         self.src_widget = None
         self.save_cursor = self['cursor'] or ''
         self.enable_audio = enable_audio
+
 
         
         # configure the grid layout
@@ -47,7 +50,7 @@ class MerlinGUI(GUIActions):
         # rw = int(screen_w / 2)
         # rh = int(screen_h / 2)
         # self.geometry('{}x{}+{:g}+{:g}'.format(rw, rh, rw / 2, rh / 2))
-        self.geometry('{}x{}+{:g}+{:g}'.format(700, 600, 300, 100))
+        self.geometry('{}x{}+{:g}+{:g}'.format(800, 600, 300, 100))
         self.update()
         
         # Create menu
@@ -72,7 +75,7 @@ class MerlinGUI(GUIActions):
         self.main_paned_window.grid(row=0, column=0, sticky='eswn')
         
         # Main tree area
-        self.main_tree_area = tk.LabelFrame(self.main_paned_window, text="Playlist", width=400)
+        self.main_tree_area = tk.LabelFrame(self.main_paned_window, text="Playlist", width=450)
         self.main_tree_area.grid_rowconfigure(0, weight=1)
         self.main_tree_area.grid_columnconfigure(0, weight=1)
         self.main_tree_area.grid_propagate(0)
@@ -85,7 +88,7 @@ class MerlinGUI(GUIActions):
         self.make_main_tree(self.main_tree_area)
         
         # Control Frame
-        self.control_frame = tk.Frame(self.main_paned_window, width=280)
+        self.control_frame = tk.Frame(self.main_paned_window, width=330)
         self.control_frame.grid_rowconfigure(4, weight=1)
         self.control_frame.grid_columnconfigure(0, weight=1)
         self.control_frame.grid_columnconfigure(1, weight=1)
@@ -131,11 +134,11 @@ class MerlinGUI(GUIActions):
         self.main_tree_button_area = tk.LabelFrame(self.control_frame, text='Déplacer\nélément', width=60)
         self.main_tree_button_area.grid(row=2, column=0, sticky='nw')
         
-        self.buttonMoveUp = tk.Button(self.main_tree_button_area, text="\u21D1",fg="black", width=5, state='disabled', command=self.main_tree.moveUp)
+        self.buttonMoveUp = tk.Button(self.main_tree_button_area, text="\u21D1", width=8, state='disabled', command=self.main_tree.moveUp)
         self.buttonMoveUp.grid(row=0, column=0)
-        self.buttonMoveParentDir = tk.Button(self.main_tree_button_area, text="\u21D0",fg="black", width=5, state='disabled', command=self.main_tree.moveParentDir)
+        self.buttonMoveParentDir = tk.Button(self.main_tree_button_area, text="\u21D0", width=8, state='disabled', command=self.main_tree.moveParentDir)
         self.buttonMoveParentDir.grid(row=1, column=0)
-        self.buttonMoveDown = tk.Button(self.main_tree_button_area, text="\u21D3",fg="black", width=5, state='disabled', command=self.main_tree.moveDown)
+        self.buttonMoveDown = tk.Button(self.main_tree_button_area, text="\u21D3", width=8, state='disabled', command=self.main_tree.moveDown)
         self.buttonMoveDown.grid(row=2, column=0)
          
          
@@ -153,9 +156,9 @@ class MerlinGUI(GUIActions):
         
         self.fav_tree_button_area = tk.LabelFrame(self.control_frame, text='Déplacer favori')
         self.fav_tree_button_area.grid(row=3, column=1, sticky='s')
-        self.buttonMoveUpFav = tk.Button(self.fav_tree_button_area, text="\u21D1",fg="black", width=5, state='disabled', command=self.fav_tree.moveUp)
+        self.buttonMoveUpFav = tk.Button(self.fav_tree_button_area, text="\u21D1",fg="black", width=8, state='disabled', command=self.fav_tree.moveUp)
         self.buttonMoveUpFav.grid(row=0, column=0)
-        self.buttonMoveDownFav = tk.Button(self.fav_tree_button_area, text="\u21D3",fg="black", width=5, state='disabled', command=self.fav_tree.moveDown)
+        self.buttonMoveDownFav = tk.Button(self.fav_tree_button_area, text="\u21D3",fg="black", width=8, state='disabled', command=self.fav_tree.moveDown)
         self.buttonMoveDownFav.grid(row=0, column=1)
         
         
@@ -240,7 +243,14 @@ class MerlinGUI(GUIActions):
             else:
                 self.thumbnails[item['uuid']] = ''    
                 
-    
+    def load_image(self):
+        filename = "merlinator_64px.ico"
+        with zipfile.ZipFile('../res/defaultPics.zip', 'r') as zfile:
+            zippath = zipfile.Path(zfile, at=filename)
+            if zippath.exists():
+                with zfile.open(filename, 'r', pwd=info) as imagefile:
+                    with Image.open(imagefile) as image:
+                        self.iconphoto(False, PhotoImage(image))
 
     def import_playlist(self):
         self.playlistpath = filedialog.askopenfilename(initialfile="playlist.bin", filetypes=[('binary', '*.bin')])

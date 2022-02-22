@@ -15,6 +15,10 @@ INSTALLATION.
   En plus des bibliothèques standard de python, merlinator nécessite la bibliothèque 'Pillow'. Pour installer Pillow, taper dans une invite de commande les lignes suivantes :  
     python -m pip install --upgrade pip  
     python -m pip install --upgrade Pillow 
+	
+  Pour bénéficier de la fonction de lecture audio (optionnelle), merlinator a besoin des bibliothèques 'pygame' et 'mutagen', disponibles elles aussi librement. Pour les installer, taper simplement les commandes suivantes :  
+    python -m pip install pygame   
+    python -m pip install mutagen 
 
 
 LANCEMENT.  

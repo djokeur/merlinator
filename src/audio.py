@@ -34,7 +34,7 @@ class AudioWidget(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
         #slider
-        self.slider = ttk.Scale(self, from_=0, to=100, orient='horizontal', value=0, command = self.slider_action)
+        self.slider = ttk.Scale(self, orient='horizontal', from_=0, value=0, to=0, command = self.slider_action)
         self.slider.grid(row=0, column=0, columnspan=3, sticky='ew')
         #slider label
         self.slider_label = tk.Label(self, text="00:00 / 00:00")
@@ -111,6 +111,7 @@ class AudioWidget(tk.Frame):
             self.play_button['state'] = 'normal'
         else:
             self.play_button['state'] = 'disabled'
+            self.config(to=0)
                 
         self.stop_button['state'] = 'disabled'
         if not self.looping:
