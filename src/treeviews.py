@@ -341,7 +341,7 @@ class MerlinMainTree(MerlinTree):
             self.set(iid, 'type', '4')
             self.set(iid, 'soundpath', filepath)
             self.set(iid, 'add_time', str(int(time())))
-            self.set(current_node, 'uuid', uuid)
+            self.set(iid, 'uuid', uuid)
         if len(filepaths)==1:
             self.focus(iid)
             self.selection_set(iid)

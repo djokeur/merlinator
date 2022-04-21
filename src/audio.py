@@ -111,7 +111,7 @@ class AudioWidget(tk.Frame):
             self.play_button['state'] = 'normal'
         else:
             self.play_button['state'] = 'disabled'
-            self.config(to=0)
+            self.slider.config(to=0)
                 
         self.stop_button['state'] = 'disabled'
         if not self.looping:

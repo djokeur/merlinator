@@ -20,7 +20,6 @@ try:
 except ImportError as error:
     enable_audio = False
 
-
 class MerlinGUI(GUIActions):
     
     def __init__(self):
