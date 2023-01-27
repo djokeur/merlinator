@@ -169,7 +169,7 @@ class MerlinMainTree(MerlinTree):
             if item['type']==1: # root
                 continue
             self.insert(parent, item['order'], iid=iid, text=item['title'], values=data, image=thumbnails[item['uuid']])
-            if item['type'] in [2, 34]: # directory 
+            if item['type'] in [2, 6, 34]: # directory 
                 self.item(iid, tags="directory")
                 self.item(iid, text=' \u25AE ' + self.item(iid, 'text'))
             elif item['type']==10: # favoris
@@ -279,7 +279,7 @@ class MerlinMainTree(MerlinTree):
     def add_menu(self):
         current_node = self.selection()
         iid = self.insert(self.parent(current_node), self.index(current_node)+1, text=' \u25AE Nouveau Menu', tags="directory")
-        self.set(iid, 'type', '2')
+        self.set(iid, 'type', '6')
         self.set(iid, 'add_time', str(int(time())))
         self.set(iid, 'title', 'Nouveau Menu')
         self.set(iid, 'uuid', str(uuid.uuid4()))
@@ -434,10 +434,9 @@ class MerlinMainTree(MerlinTree):
                     # filepath = new_filepath
                     # dirname, basename = os.path.split(filepath)
                 
-        if uuid not in self.rootGUI.thumbnails:
-            with Image.open(filepath) as image:
-                image_small = image.resize((40, 40), Image.ANTIALIAS)
-                self.rootGUI.thumbnails[uuid] = ImageTk.PhotoImage(image_small)
+        with Image.open(filepath) as image:
+            image_small = image.resize((40, 40), Image.ANTIALIAS)
+            self.rootGUI.thumbnails[uuid] = ImageTk.PhotoImage(image_small)
         
         self.item(current_node, image=self.rootGUI.thumbnails[uuid])
         self.set(current_node, 'imagepath', filepath)

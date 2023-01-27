@@ -277,6 +277,7 @@ class MerlinGUI(GUIActions):
             
     def import_playlist_from_zip(self):
         filepath = filedialog.askopenfilename(initialfile="merlin.zip", filetypes=[('fichier zip', '*.zip')])
+        self.playlistpath = filepath
         if not filepath:
             return
         try:

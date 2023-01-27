@@ -159,11 +159,12 @@ def export_merlin_to_zip(items, zfile):
                         with Image.open(imagepath) as image:
                             image_icon = image.resize((128,128), Image.ANTIALIAS)
                             with zfile.open(filename, "w") as fout:
-                                image_icon.save(fout, "JPEG", mode='RGB')
+                                image_icon.save(fout, "JPEG", mode='RGB', optimize=False, progressive=False)
                     else:
                         files_not_found.append(imagepath)
                 else:
                     try:
+                        print(imagepath)
                         with zipfile.ZipFile(imagepath, "r") as zin:
                             with zfile.open(filename, "w") as fout:
                                 fout.write(zin.read(filename, pwd=info))
