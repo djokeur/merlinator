@@ -6,7 +6,7 @@
 
 
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, simpledialog
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 import os.path, zipfile
@@ -56,17 +56,18 @@ class MerlinGUI(GUIActions):
         top_menu = tk.Menu(self)
         self.config(menu=top_menu)
         file_menu = tk.Menu(top_menu, tearoff=False)
-        top_menu.add_cascade(label='Fichier', menu=file_menu)
-        file_menu.add_command(label="Nouvelle session (Ctrl-n)", command=self.new_session)
-        file_menu.add_command(label="Ouvrir session (Ctrl-o)", command=self.load_session)
-        file_menu.add_command(label="Sauver session  (Ctrl-s)", command=self.save_session)
-        file_menu.add_command(label="Sauver session sous", command=self.saveas_session)
-        file_menu.add_command(label="Importer playlist (Ctrl-i)", command=self.import_playlist)
-        file_menu.add_command(label="Exporter playlist (Ctrl-e)", command=self.export_playlist)
-        file_menu.add_command(label="Importer archive (Ctrl-m)", command=self.import_playlist_from_zip)
-        file_menu.add_command(label="Exporter archive (Ctrl-x)", command=self.export_all_to_zip)
-        file_menu.add_command(label="Quitter", command=self.quit)
-
+        top_menu.add_cascade(label='Fichier', underline=0, menu=file_menu)
+        file_menu.add_command(label="Nouvelle session (Ctrl-n)", underline=0, command=self.new_session)
+        file_menu.add_command(label="Ouvrir session (Ctrl-o)", underline=0, command=self.load_session)
+        file_menu.add_command(label="Sauver session  (Ctrl-s)", underline=0, command=self.save_session)
+        file_menu.add_command(label="Sauver session sous", underline=1, command=self.saveas_session)
+        file_menu.add_separator()
+        file_menu.add_command(label="Importer playlist/archive (Ctrl-i)", underline=0, command=self.import_playlist)
+        file_menu.add_command(label="Exporter playlist (Ctrl-e)", underline=0, command=self.export_playlist)
+        file_menu.add_command(label="Exporter archive (Ctrl-x)", underline=1, command=self.export_all_to_zip)
+        file_menu.add_separator()
+        file_menu.add_command(label="Quitter", underline=0, command=self.quit)
+        
         self.grid_columnconfigure(0, weight=1)
         
         # Main paned window
@@ -172,7 +173,6 @@ class MerlinGUI(GUIActions):
         self.bind("<Control-n>", lambda event:self.new_session())
         self.bind("<Control-i>", lambda event:self.import_playlist())
         self.bind("<Control-e>", lambda event:self.export_playlist())
-        self.bind("<Control-m>", lambda event:self.import_playlist_from_zip())
         self.bind("<Control-x>", lambda event:self.export_all_to_zip())
 
 
@@ -210,15 +210,18 @@ class MerlinGUI(GUIActions):
         self.scroll_fx.config( command = fav_tree.xview )
         
 
-    def populate_trees(self, items):
-        self.main_tree.populate(items, self.thumbnails)
-        self.fav_tree.populate(self.main_tree)
+    def populate_trees(self, items, overwrite):
+        self.main_tree.populate(items, self.thumbnails, overwrite)
+        self.fav_tree.populate(self.main_tree, overwrite)
+        
 
-
-    def load_thumbnails(self, items):
-        self.thumbnails = {}
+    def load_thumbnails(self, items, overwrite=True):
+        if overwrite:
+            self.thumbnails = {}
         for item in items:
             imagepath = item['imagepath']
+            if item['uuid'] in self.thumbnails:
+                continue
             if os.path.exists(imagepath):
                 with Image.open(imagepath) as image:
                     image_small = image.resize((40, 40), Image.ANTIALIAS)
@@ -227,8 +230,9 @@ class MerlinGUI(GUIActions):
                 self.thumbnails[item['uuid']] = ''
                 
     
-    def load_thumbnails_from_zip(self, items, zfile):
-        self.thumbnails = {}
+    def load_thumbnails_from_zip(self, items, zfile, overwrite=True):
+        if overwrite:
+            self.thumbnails = {}
         for item in items:
             if item['uuid'] in self.thumbnails:
                 continue
@@ -251,53 +255,57 @@ class MerlinGUI(GUIActions):
                     with Image.open(imagefile) as image:
                         self.iconphoto(False, PhotoImage(image))
 
+
+
     def import_playlist(self):
-        self.playlistpath = filedialog.askopenfilename(initialfile="playlist.bin", filetypes=[('binary', '*.bin')])
-        dirname = os.path.dirname(self.playlistpath)
+        filepath = filedialog.askopenfilename(initialfile="playlist.bin", filetypes=[('tous types supportés', '*.bin;*.zip'), ('binaire', '*.bin'), ('fichier zip', '*.zip')])
+        if not filepath:
+            return
+        
+        overwrite = True
+        if self.main_tree.get_children():
+            dialog = TwoButtonCancelDialog(title="Combiner ou écraser?", parent=self, \
+                                            prompt="Écraser la playlist courante, ou combiner les playlists?", \
+                                            button0text="Combiner", button1text="Écraser")
+            if dialog.res == 2:
+                return
+            elif dialog.res == 0:
+                overwrite = False
+    
         try: 
-            with open(self.playlistpath, "rb") as file:
-                items = read_merlin_playlist(file)
-                for item in items:
-                    if item['type'] == 1: # root
-                        item['imagepath'] = ''
-                    else:
-                        item['imagepath'] = os.path.join(dirname, item['uuid'] + '.jpg')
-                    if item['type'] in [4, 36]:
-                        soundpath = os.path.join(dirname, item['uuid'] + '.mp3')
-                        item['soundpath'] = soundpath
-                    else:
-                        item['soundpath'] = ''
-            self.load_thumbnails(items)
-            self.populate_trees(items)
+            if filepath[-3:] == "bin":
+                dirname = os.path.dirname(filepath)
+                with open(filepath, "rb") as file:
+                    items = read_merlin_playlist(file)
+                    for item in items:
+                        if item['type'] == 1: # root
+                            item['imagepath'] = ''
+                        else:
+                            item['imagepath'] = os.path.join(dirname, item['uuid'] + '.jpg')
+                        if item['type'] in [4, 36]:
+                            soundpath = os.path.join(dirname, item['uuid'] + '.mp3')
+                            item['soundpath'] = soundpath
+                        else:
+                            item['soundpath'] = ''
+                    self.load_thumbnails(items, overwrite)
+            elif filepath[-3:] == "zip":
+                with zipfile.ZipFile(filepath, 'r') as z:
+                    with z.open("playlist.bin", "r") as file:
+                        items = read_merlin_playlist(file)
+                    for item in items:
+                        item['imagepath'] = filepath
+                        if item['type'] in [4, 36]:
+                            item['soundpath'] = filepath
+                        else:
+                            item['soundpath'] = ''
+                    self.load_thumbnails_from_zip(items, z, overwrite)
+            self.populate_trees(items, overwrite)
             self.buttonAddMenu['state'] = 'normal'
             self.buttonAddSound['state'] = 'normal'
         except IOError:
             tk.messagebox.showwarning("Erreur", "Fichier non accessible")
-            
-            
-    def import_playlist_from_zip(self):
-        filepath = filedialog.askopenfilename(initialfile="merlin.zip", filetypes=[('fichier zip', '*.zip')])
-        self.playlistpath = filepath
-        if not filepath:
-            return
-        try:
-            with zipfile.ZipFile(filepath, 'r') as z:
-                with z.open("playlist.bin", "r") as file:
-                    items = read_merlin_playlist(file)
-                for item in items:
-                    item['imagepath'] = filepath
-                    if item['type'] in [4, 36]:
-                        item['soundpath'] = filepath
-                    else:
-                        item['soundpath'] = ''
-                self.load_thumbnails_from_zip(items, z)
-                self.populate_trees(items)
-                self.buttonAddMenu['state'] = 'normal'
-                self.buttonAddSound['state'] = 'normal'
-        except IOError:
-            tk.messagebox.showwarning("Erreur", "Fichier non accessible")
-
-
+          
+          
     def export_playlist(self):
         t = self.main_tree
         if not t.get_children(''):
@@ -496,4 +504,5 @@ class MerlinGUI(GUIActions):
 
     
         
+
 

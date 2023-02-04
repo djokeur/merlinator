@@ -92,7 +92,7 @@ class MerlinTree(Treeview):
             parent = self.parent(parent)
         return res
  
-                
+        
 
 class MerlinMainTree(MerlinTree):
 
@@ -143,18 +143,39 @@ class MerlinMainTree(MerlinTree):
         
         self.tag_configure("directory", foreground="grey")
         
-
     
+    def populate(self, items, thumbnails, overwrite):
+        if overwrite:
+            # clear existing data
+            for c in self.get_children():
+                self.delete(c)
+            if self.iid_Merlin_discover:
+                self.delete(self.iid_Merlin_discover)
+                self.iid_Merlin_discover = None
+            if self.iid_Merlin_favorite:
+                self.delete(self.iid_Merlin_favorite)
+                self.iid_Merlin_favorite = None
         
-    
-    def populate(self, items, thumbnails):
-        # clear existing data
-        for c in self.get_children():
-            self.delete(c)
-        if self.iid_Merlin_discover:
-            self.delete(self.iid_Merlin_discover)
-        if self.iid_Merlin_favorite:
-            self.delete(self.iid_Merlin_favorite)
+        mapiid = dict()
+        mapiid[1] = ''
+        offsets = dict()
+        offsets[''] = len(self.get_children())
+        
+        merge = False
+        for item in (item for item in items if item['parent_id']==1):
+            for c in self.get_children():
+                if self.item(c, 'text')[3:] == item['title'] and \
+                   self.set(c, 'uuid') == item['uuid']:
+                    merge = True
+                    break
+            if merge:
+                break
+        if merge:
+            self.focus_force()
+            question = "Les playlists ont des éléments en commun. Fusionner les deux playlist?\n(cliquer sur Non pour joindre la nouvelle playlist à la fin)"
+            answer = tk.messagebox.askyesno("Fusionner?",question)
+            if not answer:
+                merge = False
         
         # adding data
         for item in items:
@@ -168,16 +189,42 @@ class MerlinMainTree(MerlinTree):
                 parent = item['parent_id']
             if item['type']==1: # root
                 continue
-            self.insert(parent, item['order'], iid=iid, text=item['title'], values=data, image=thumbnails[item['uuid']])
-            if item['type'] in [2, 6, 34]: # directory 
+            elif item['type'] in {10,42} and self.iid_Merlin_favorite: # favoris
+                continue
+            elif item['type'] in {18,50} and self.iid_Merlin_discover: # ajouts récents
+                continue
+            
+            data = tuple([ favorite] + \
+                [item[key] for key in MerlinMainTree.COL[1:]])
+            parent = mapiid[item['parent_id']]
+            
+            if merge:
+                for c in self.get_children(parent):
+                    if self.item(c, 'text')[3:] == item['title'] and \
+                       self.set(c, 'uuid') == item['uuid']:
+                        mapiid[item['id']] = c
+                        offsets[c] = len(self.get_children(c))
+                        break
+                if item['id'] in mapiid:
+                    offsets[parent] -= 1
+                    continue
+            
+            iid = self.insert(parent, item['order']+offsets[parent], text=item['title'], values=data, image=thumbnails[item['uuid']])
+            mapiid[item['id']] = iid
+            offsets[iid] = 0
+            self.set(iid, 'id', iid)
+            self.set(iid, 'parent_id', parent)
+            
+            
+            if item['type']%32 in [2, 6]: # directory 
                 self.item(iid, tags="directory")
                 self.item(iid, text=' \u25AE ' + self.item(iid, 'text'))
-            elif item['type']==10: # favoris
+            elif item['type']%32 == 10: # favoris
                 self.item(iid, tags="directory")
                 self.item(iid, text=' \u25AE ' + self.item(iid, 'text'))
                 self.iid_Merlin_favorite = iid
                 self.detach(iid)
-            elif item['type']==18: # ajouts récents
+            elif item['type']%32==18: # ajouts récents
                 self.item(iid, tags="directory")
                 self.item(iid, text=' \u25AE ' + self.item(iid, 'text'))
                 self.iid_Merlin_discover = iid
@@ -490,16 +537,18 @@ class MerlinFavTree(MerlinTree):
         MerlinTree.__init__(self, parent, root)
         
     
-    def populate(self, main_tree):
-        # clear existing data
-        for c in self.get_children():
-            self.delete(c)
+    def populate(self, main_tree, overwrite):
+        if overwrite:
+            # clear existing data
+            for c in self.get_children():
+                self.delete(c)
         
         # add data
-        fav_list = sorted([(int(main_tree.set(node,'fav_order')), node) for node in main_tree.tag_has('favorite')], reverse=True)
+        nb_children = len(self.get_children())
+        fav_list = sorted([(int(main_tree.set(node,'fav_order')), node) for node in main_tree.tag_has('favorite') if not self.exists(node)], reverse=True)
         for order, fav in enumerate(fav_list):
             node = fav[1]
-            self.insert('', order, iid=node, text=main_tree.item(node, 'text'), \
+            self.insert('', order+nb_children, iid=node, text=main_tree.item(node, 'text'), \
                         image=main_tree.item(node, 'image'))
         self.update()
     

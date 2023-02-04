@@ -117,3 +117,36 @@ class GUIActions(tk.Tk):
         else:
             return
         
+
+class TwoButtonCancelDialog(tk.simpledialog.Dialog):
+    def __init__(self, parent, title, prompt, button0text, button1text):
+        self.res = 2
+        self.prompt = prompt
+        self.button0text = button0text
+        self.button1text = button1text
+        super().__init__(parent, title)
+        
+    def body(self, frame):
+        # print(type(frame)) # tkinter.Frame
+        self.label = tk.Label(frame, width=40, text=self.prompt)
+        self.label.pack()
+        return frame
+        
+    def button_pressed(self, button):
+        self.res = button
+        self.destroy()
+
+
+    def buttonbox(self):
+        self.button0 = tk.Button(self, text=self.button0text, width=12, command=lambda:self.button_pressed(0))
+        self.button0.focus_set()
+        self.button0.focus()
+        self.button0.pack(fill=tk.NONE, expand=True, side=tk.LEFT)
+        self.button1 = tk.Button(self, text=self.button1text, width=12, command=lambda:self.button_pressed(1))
+        self.button1.pack(fill=tk.NONE, expand=True, side=tk.LEFT)
+        self.cancel_button = tk.Button(self, text='Annuler', width=12, command=lambda:self.button_pressed(2))
+        self.cancel_button.pack(fill= tk.NONE, expand=True, side=tk.RIGHT)
+        self.bind("<Escape>", lambda event: self.button_pressed(2))
+        self.bind("<Return>", lambda event: self.focus_get().invoke() if hasattr(self.focus_get(), 'invoke') else None)
+        
+       
