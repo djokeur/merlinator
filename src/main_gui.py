@@ -271,7 +271,8 @@ class MerlinGUI(GUIActions):
                 return
             elif dialog.res == 0:
                 overwrite = False
-    
+        if overwrite:
+            self.playlistpath = filepath
         try: 
             if filepath[-3:] == "bin":
                 dirname = os.path.dirname(filepath)
