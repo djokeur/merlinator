@@ -210,7 +210,7 @@ class MerlinGUI(GUIActions):
         self.scroll_fx.config( command = fav_tree.xview )
         
 
-    def populate_trees(self, items, overwrite):
+    def populate_trees(self, items, overwrite=True):
         self.main_tree.populate(items, self.thumbnails, overwrite)
         self.fav_tree.populate(self.main_tree, overwrite)
         
@@ -338,7 +338,7 @@ class MerlinGUI(GUIActions):
         items = MerlinMainTree.defaultItems
         with zipfile.ZipFile('../res/defaultPics.zip', 'r') as zfile:
             self.load_thumbnails_from_zip(items, zfile)
-        self.populate_trees(items)
+        self.populate_trees(items, overwrite=True)
         self.buttonAddMenu['state'] = 'normal'
         self.buttonAddSound['state'] = 'normal'
         
