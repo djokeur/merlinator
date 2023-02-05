@@ -223,6 +223,11 @@ class MerlinGUI(GUIActions):
             if item['uuid'] in self.thumbnails:
                 continue
             if os.path.exists(imagepath):
+                with open(imagepath, "rb") as imagestream:
+                    if IsImageProgressive(imagestream):
+                        tk.messagebox.showwarning(title="Problème de format", message=f"Le format de l'image '{imagepath}' est JPEG 'progressive'. Ce format n'est pas pris en charge par toutes les Merlin.")
+                        self.thumbnails[item['uuid']] = ''
+                        continue
                 with Image.open(imagepath) as image:
                     image_small = image.resize((40, 40), Image.ANTIALIAS)
                     self.thumbnails[item['uuid']] = PhotoImage(image_small)
@@ -239,6 +244,11 @@ class MerlinGUI(GUIActions):
             filename = item['uuid'] + '.jpg'
             zippath = zipfile.Path(zfile, at=filename)
             if zippath.exists():
+                with zfile.open(filename, 'rb', pwd=info) as imagestream:
+                    if IsImageProgressive(imagestream):
+                        tk.messagebox.showwarning(title="Problème de format", message=f"Le format de l'image '{filename}' est JPEG 'progressive'. Ce format n'est pas pris en charge par toutes les Merlin.")
+                        self.thumbnails[item['uuid']] = ''
+                        continue
                 with zfile.open(filename, 'r', pwd=info) as imagefile:
                     with Image.open(imagefile) as image:
                         image_small = image.resize((40, 40), Image.ANTIALIAS)

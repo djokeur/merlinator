@@ -11,6 +11,7 @@ from PIL.ImageTk import PhotoImage
 import zipfile
 import os.path
 import json
+import struct
 
 
 bytezero = b'\x00'
@@ -193,3 +194,28 @@ def export_merlin_to_zip(items, zfile):
     
     return files_not_found
         
+
+def IsImageProgressive(stream):
+    #with open(filename, "rb") as stream:
+    while True:
+        blockStart = struct.unpack('B', stream.read(1))[0]
+        if blockStart != 0xff:
+            raise ValueError('Invalid char code ' + blockStart + ' - not a JPEG file: ' + filename)
+            return False
+
+        blockType = struct.unpack('B', stream.read(1))[0]
+        if blockType == 0xd8:   # Start Of Image
+            continue
+        elif blockType == 0xc0: # Start of baseline frame
+            return False
+        elif blockType == 0xc2: # Start of progressive frame
+            return True
+        elif blockType >= 0xd0 and blockType <= 0xd7: # Restart
+            continue
+        elif blockType == 0xd9: # End Of Image
+            break
+        else:                   # Variable-size block, just skip it
+            blockSize = struct.unpack('2B', stream.read(2))
+            blockSize = blockSize[0] * 256 + blockSize[1] - 2
+            stream.seek(blockSize, 1)
+    return False

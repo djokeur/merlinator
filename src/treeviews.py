@@ -407,6 +407,9 @@ class MerlinMainTree(MerlinTree):
         filepath = filedialog.askopenfilename(initialdir=playlist_dirname, initialfile=initfile, filetypes=[('images jpg', '*.jpg')])
         if not filepath:
             return
+        with open(filepath, 'rb') as stream:
+            if IsImageProgressive(stream):
+                tk.messagebox.showwarning(title="Problème de format", message=f"Le format de l'image est JPEG 'progressive'. Ce format n'est pas pris en charge par toutes les Merlin.")
         dirname, basename = os.path.split(filepath)
         root, ext = os.path.splitext(basename)
         # check length
