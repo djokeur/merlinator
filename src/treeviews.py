@@ -299,28 +299,35 @@ class MerlinMainTree(MerlinTree):
         self.selection_set(self.current_selection)
         self.focus(self.current_selection)
 
-    def deleteNode(self, event=None):
-        node = self.selection()
-        if (event and event.widget in [self.rootGUI, self]) or \
-            event is None:
-            if not node:
-                return
-            if self.tag_has('directory', node):
-                node_type = 'menu'  
-            else:
-                node_type = 'fichier'
-            detail = ''
-            if node_type == 'menu' and self.get_children(node):
-                detail = " et tout ce qu'il contient"
-            question = f"Effacer le {node_type} '{self.item(node, 'text')[3:]}'{detail} ?"
-            answer = tk.messagebox.askyesno("Confirmation",question)
-            if answer:
-                self.delete(node)
-                fav_tree = self.rootGUI.fav_tree
-                if fav_tree.exists(node):
-                    fav_tree.delete(node)
-            self.rootGUI.sync_buttons_main()
-            self.rootGUI.sync_buttons_fav()
+    def deleteNode(self, event=None, forceNode=None):
+        if forceNode:
+            node = forceNode
+            if (children:=self.get_children(node)):
+                for child in children:
+                    self.deleteNode(event, child)
+            fav_tree = self.rootGUI.fav_tree
+            if fav_tree.exists(node):
+                fav_tree.delete(node)
+            self.delete(node)
+        else:
+            node = self.selection()
+            if (event and event.widget in [self.rootGUI, self]) or \
+                event is None:
+                if not node:
+                    return
+                if self.tag_has('directory', node):
+                    node_type = 'menu'  
+                else:
+                    node_type = 'fichier'
+                detail = ''
+                if node_type == 'menu' and self.get_children(node):
+                    detail = " et tout ce qu'il contient"
+                question = f"Effacer le {node_type} '{self.item(node, 'text')[3:]}'{detail} ?"
+                answer = tk.messagebox.askyesno("Confirmation",question)
+                if answer:
+                    self.deleteNode(event, node)
+                self.rootGUI.sync_buttons_main()
+                self.rootGUI.sync_buttons_fav()
 
 
     def add_menu(self):

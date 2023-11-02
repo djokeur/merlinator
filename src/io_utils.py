@@ -165,7 +165,6 @@ def export_merlin_to_zip(items, zfile):
                         files_not_found.append(imagepath)
                 else:
                     try:
-                        print(imagepath)
                         with zipfile.ZipFile(imagepath, "r") as zin:
                             with zfile.open(filename, "w") as fout:
                                 fout.write(zin.read(filename, pwd=info))
