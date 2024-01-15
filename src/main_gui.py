@@ -229,7 +229,7 @@ class MerlinGUI(GUIActions):
                         self.thumbnails[item['uuid']] = ''
                         continue
                 with Image.open(imagepath) as image:
-                    image_small = image.resize((40, 40), Image.ANTIALIAS)
+                    image_small = image.resize((40, 40), Image.LANCZOS)
                     self.thumbnails[item['uuid']] = PhotoImage(image_small)
             else:
                 self.thumbnails[item['uuid']] = ''
@@ -251,7 +251,7 @@ class MerlinGUI(GUIActions):
                         continue
                 with zfile.open(filename, 'r', pwd=info) as imagefile:
                     with Image.open(imagefile) as image:
-                        image_small = image.resize((40, 40), Image.ANTIALIAS)
+                        image_small = image.resize((40, 40), Image.LANCZOS)
                         self.thumbnails[item['uuid']] = PhotoImage(image_small)
             else:
                 self.thumbnails[item['uuid']] = ''    
