@@ -461,7 +461,7 @@ class MerlinMainTree(MerlinTree):
                         # if not answer:
                             # return
                     # with Image.open(filepath) as image:
-                        # image_thumbnail = image.resize((128,128), Image.ANTIALIAS)
+                        # image_thumbnail = image.resize((128,128), Image.LANCZOS)
                         # image_thumbnail.save(new_filepath, "JPEG", mode='RGB')
                     # filepath = new_filepath
                     # dirname, basename = os.path.split(filepath)
@@ -486,13 +486,13 @@ class MerlinMainTree(MerlinTree):
                         # if not answer:
                             # return
                     # with Image.open(filepath) as image:
-                        # image_thumbnail = image.resize((128,128), Image.ANTIALIAS)
+                        # image_thumbnail = image.resize((128,128), Image.LANCZOS)
                         # image_thumbnail.save(new_filepath, "JPEG", mode='RGB')
                     # filepath = new_filepath
                     # dirname, basename = os.path.split(filepath)
                 
         with Image.open(filepath) as image:
-            image_small = image.resize((40, 40), Image.ANTIALIAS)
+            image_small = image.resize((40, 40), Image.LANCZOS)
             self.rootGUI.thumbnails[uuid] = ImageTk.PhotoImage(image_small)
         
         self.item(current_node, image=self.rootGUI.thumbnails[uuid])
